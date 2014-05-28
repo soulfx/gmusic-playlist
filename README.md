@@ -6,6 +6,7 @@ playlist scripts for gmusic
 Prerequisites
 
 python - https://www.python.org
+
 gmusicapi - https://github.com/simon-weber/Unofficial-Google-Music-API
 
 ImportList.py
