@@ -1,5 +1,5 @@
 # Author: John Elkins <john.elkins@yahoo.com>
-# License: MIT <see _MIT_License.txt>
+# License: MIT <LICENSE>
 
 import getpass
 import sys
