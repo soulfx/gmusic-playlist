@@ -5,7 +5,7 @@ playlist scripts for gmusic
 
 Prerequisites
 
-python - https://www.python.org
+python 2.7 - https://www.python.org
 
 gmusicapi - https://github.com/simon-weber/Unofficial-Google-Music-API
 
