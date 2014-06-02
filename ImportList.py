@@ -50,6 +50,9 @@ playlist_id = api.create_playlist(playlist_name)
 no_matches = 0
 low_scores = 0
 
+# gather up the song_ids and submit as a batch
+song_ids = []
+
 # loop over the tracks
 for track in tracks:
     # skip empty lines
@@ -64,16 +67,14 @@ for track in tracks:
 
     # check for a result
     if len(top_result) == 0:
-        log(u'!: '+track)
+        log(u'!! '+track)
         no_matches += 1
         continue
+    else:
+        # display the original track for reference
+        log(u'   '+track)
 
-    # check the result score
     top_result = top_result[0]
-    result_score = u' + '
-    if top_result.get('score') < 120:
-        result_score = u' - '
-        low_scores += 1
 
     # gather up info about result
     song = top_result.get('track')
@@ -81,13 +82,27 @@ for track in tracks:
     song_title = song.get('title')
     song_artist = song.get('artist')
     song_album = song.get('album')
-    song_year = unicode(song.get('year'))
 
+    # check the result score
+    result_score = u' + '
+    if top_result.get('score') < 120:
+        result_score = u' - '
+        low_scores += 1
+    # sometimes google picks a song that isn't what we want at all
+    elif not song_title.lower() in track.lower():
+        result_score = u' - '
+        low_scores += 1
+        
     log ( result_score + song_artist + u' - ' + song_title + u' - '
-        + song_album + u' (' + song_year + u')' )
+        + song_album )
     
-    # add the song to the playlist
-    api.add_songs_to_playlist(playlist_id,song_id)
+    # add the song to the id list
+    song_ids.append(song_id)
+
+# TODO if there are more than 1k songs, create another playlist
+
+# add all songs to the playlist
+api.add_songs_to_playlist(playlist_id,song_ids)
 
 # log a final status
 log('===============================================================')
