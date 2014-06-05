@@ -5,6 +5,7 @@ import getpass
 import sys
 import os
 import codecs
+import math
 from gmusicapi import Mobileclient
 
 # the username to use
@@ -42,9 +43,8 @@ if not logged_in:
 # create the playlist
 playlist_name = os.path.basename(os.path.splitext(filepath)[0])
 log('===============================================================')
-log(u'Creating Playlist: '+playlist_name)
+log(u'Searching for ' +unicode(len(tracks))+ u' songs from: '+playlist_name)
 log('===============================================================')
-playlist_id = api.create_playlist(playlist_name)
 
 # keep track of stats
 no_matches = 0
@@ -99,16 +99,43 @@ for track in tracks:
     # add the song to the id list
     song_ids.append(song_id)
 
-# TODO if there are more than 1k songs, create another playlist
+log('===============================================================')
+log(u'Adding '+unicode(len(song_ids))+' found songs to: '+playlist_name)
+log('===============================================================')
 
-# add all songs to the playlist
-api.add_songs_to_playlist(playlist_id,song_ids)
+# add the songs to the playlist(s)
+max_playlist_size = 1000
+current_playlist = 1
+total_playlists_needed = int(math.ceil(len(song_ids)/float(max_playlist_size)))
+while current_playlist <= total_playlists_needed:
+    # build the playlist name, add part number if needed
+    current_playlist_name = playlist_name
+    if total_playlists_needed > 1:
+        current_playlist_name += u' Part ' + unicode(current_playlist)
+
+    # create the playlist and add the songs
+    playlist_id = api.create_playlist(current_playlist_name)
+    current_playlist_index = ( current_playlist - 1 ) * max_playlist_size
+    current_songs = song_ids[current_playlist_index :
+                             current_playlist_index + max_playlist_size]
+    api.add_songs_to_playlist(playlist_id,current_songs)
+
+    log(u' + '+current_playlist_name+u' - '+unicode(len(current_songs))
+        +' songs')
+
+    # go to the next playlist section
+    current_playlist += 1
 
 # log a final status
+no_match_ratio = float(no_matches) / len(tracks)
+low_score_ratio = float(low_scores) / len(tracks)
+found_ratio = 1 - no_match_ratio - low_score_ratio
+
 log('===============================================================')
-log('Creation Complete: ' + str(no_matches) + '(!) no matches, '
-    + str(low_scores) + '(-) low scores out of a total of '
-    + str(len(tracks)) + ' tracks.' )
+log('   ' + str(len(song_ids)) + '/' + str(len(tracks)) + ' tracks imported')
+log(' ! ' + str(no_match_ratio) + ' percent of tracks could not be matched')
+log(' - ' + str(low_score_ratio) + ' percent of tracks had low match scores')
+log(' + ' + str(found_ratio) + ' percent of tracks had high match scores')
 
 logfile.close()
 api.logout()
