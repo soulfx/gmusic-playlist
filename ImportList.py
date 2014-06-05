@@ -100,7 +100,7 @@ for track in tracks:
     song_ids.append(song_id)
 
 log('===============================================================')
-log(u'Adding '+unicode(len(song_ids))+' found songs to: '+playlist_name)
+log(u'Adding '+unicode(len(song_ids))+u' found songs to: '+playlist_name)
 log('===============================================================')
 
 # add the songs to the playlist(s)
