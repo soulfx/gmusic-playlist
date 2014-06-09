@@ -1,7 +1,24 @@
+	test comment
+	test fuzzy artist title search
 stray cats stray cat strut
+	test another fuzzy artist title search
 the monkees i'm a believer
+	test fuzzy title artist search
 just what i needed the cars
+	test another fuzzy title artist search
 heart of gold neil young
+	test blank track
+
+	test yet another fuzzy title artist search
 more than a feeling boston
+	test fuzzy search for song that should return a low match
 instant karma! we all shine on john lennon
-classical gas vanessa mae
+	test library search (this song isn't in aa, but it's in my library)
+vanessa-mae		classical gas
+	test detailed search (the top fuzzy result for this song isn't right)
+!!!	strange weather	am/fm
+	this should return a low result
+ac/dc	back in black	back in black
+	test another personal library search (aa will return a low match, but
+	since it's in my library it finds that one instead)
+metallica	master of puppets	orion
