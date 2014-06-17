@@ -9,6 +9,8 @@ import codecs
 import math
 from common import *
 
+tsep = track_info_separator
+
 # search for tracks in the personal library, tracks found there will work
 # for you, but if you share your playlist others may not be able to play
 # some tracks
@@ -32,28 +34,38 @@ playlist_name = os.path.basename(output_filename)
 output_filename += u'_' + unicode(datetime.datetime.now().strftime(
     '%Y%m%d%H%M%S'))
 log_filename = output_filename + u'.log'
-tsv_filename = output_filename + u'.tsv'
+csv_filename = output_filename + u'.csv'
 
 # open the files
 with codecs.open(input_filename, encoding='utf-8', mode='r') as f:
     tracks = f.read().splitlines()
 logfile = codecs.open(log_filename, encoding='utf-8', mode='w', buffering=1)
-tsvfile = codecs.open(tsv_filename, encoding='utf-8', mode='w', buffering=1)
+csvfile = codecs.open(csv_filename, encoding='utf-8', mode='w', buffering=1)
 
 # log to both the console and log file
-def log(message):
+def log(message, proceed = True):
+    if not proceed:
+        return
     print message.encode(sys.stdout.encoding, errors='replace')
     logfile.write(message)
     logfile.write(os.linesep)
 
-# log search results to the log and to the tsv
-def log_search_results(artist,album,title,song_id):
+# log search results to the log and to the csv
+def log_search_results(details):
     # log the match results    
-    log (u'   ' + artist + u' - ' + album + u' - ' + title )
+    log (u'   ' + create_details_string(details, True))
 
-    # add the found song to the tsv file
-    tsvfile.write(artist + u'\t' + album + u'\t' + title + u'\t' + song_id )
-    tsvfile.write(os.linesep)
+    # add the found song to the csv file
+    csvfile.write(create_details_string(details))
+    csvfile.write(os.linesep)
+
+# compare two strings based only on their characters
+def s_in_s(string1,string2,start=u''):
+    if not string1 or not string2:
+        return False
+    s1 = re.compile('[\W_]+', re.UNICODE).sub(u'',string1.lower())
+    s2 = re.compile('[\W_]+', re.UNICODE).sub(u'',string2.lower())
+    return re.search(start+s1,s2) or re.search(start+s2,s1)
 
 log('Loading library')
 library = api.get_all_songs()
@@ -66,6 +78,8 @@ log('===============================================================')
 # keep track of stats
 no_matches = 0
 low_scores = 0
+low_titles = 0
+low_artists = 0
 track_count = 0
 
 # gather up the song_ids and submit as a batch
@@ -81,114 +95,123 @@ for track in tracks:
     if not track:
         continue
 
-    # parse the track info if the line is in tsv format
-    track_fields = track.split(u'\t')
-    track_artist = None
-    track_album = None
-    track_title = None
-    track_id = None
+    # parse the track info if the line is in detail format
+    details_list = track.split(tsep)
+    details = create_details(details_list)
 
-    if len(track_fields) == 2:
-        # skip this, but treat it as a comment
-        log(track_fields[1])
-        # write it safely into the tsv file
-        tsvfile.write(u'\t')
-        tsvfile.write(re.compile('\t').sub(u' - ',track_fields[1]))
-        tsvfile.write(os.linesep)
+    # skip comment lines
+    if len(details_list) == 2 and not details_list[0]:
+        log(details_list[1])
+        csvfile.write(tsep)
+        csvfile.write(details_list[1])
+        csvfile.write(os.linesep)
         continue
-    if len(track_fields) >= 3:
-        track_artist = track_fields[0]
-        track_album = track_fields[1]
-        track_title = track_fields[2]
-        if not track_artist and not track_album and not track_title:
-            # empty record
-            continue
-    if len(track_fields) >= 4:
-        track_id = track_fields[3]
+
+    # skip empty details records
+    if (len(details_list) >= 3 and not details['artist']
+        and not details['album'] and not details['title']):
+        continue
 
     # at this point we should have a valid track
     track_count += 1
 
     # don't search if we already have a track id
-    if track_id and use_track_ids:
-        song_ids.append(track_id)
-        log_search_results(track_artist,track_album,track_title,track_id)
+    if details['songid'] and use_track_ids:
+        song_ids.append(details['songid'])
+        log_search_results(details)
         continue
 
     # search for the track
     search_results = []
 
     # search the personal library for the track
-    if track_artist and track_title and search_personal_library:
-        search_results = [item for item in library if track_artist.lower()
-            in item.get('artist').lower() and track_title.lower()
-            in item.get('title').lower()]
-        if len(search_results) != 0:
-            result_data = {}
-            result_data[u'track'] = search_results[0]
-            result_data[u'score'] = 200
-            search_results = [result_data]
+    lib_album_match = False
+    if details['artist'] and details['title'] and search_personal_library:
+        lib_results = [item for item in library if
+            s_in_s(details['artist'],item.get('artist'))
+            and s_in_s(details['title'],item.get('title'))]
+        log('lib search results: '+str(len(lib_results)),debug)
+        for result in lib_results:
+            if s_in_s(result['album'],details['album']):
+                lib_album_match = True
+            item = {}
+            item[u'track'] = result
+            item[u'score'] = 200
+            search_results.append(item)
 
     # search all access for the track
-    if len(search_results) == 0:
+    if not lib_album_match:
         query = track
-        if track_album:
-            query = track_artist + u' ' + track_title
-        search_results = api.search_all_access(query,max_results=7).get(
+        if details['artist'] and details['title']:
+            query = details['artist'] + u' ' + details['title']
+        aa_results = api.search_all_access(query,max_results=7).get(
             'song_hits')
+        log('aa search results: '+str(len(aa_results)),debug)
+        search_results.extend(aa_results)
 
     # check for a result
     if len(search_results) == 0:
         log(u'!! '+track)
-        tsvfile.write(track)
-        tsvfile.write(os.linesep)
+        csvfile.write(track)
+        csvfile.write(os.linesep)
         no_matches += 1
         continue
 
     top_result = search_results[0]
-    # if we have tsv info, perform a detailed search
-    if track_artist and track_title and track_album:
-        search_results = [item for item in search_results if track_title.lower()
-	    in item['track']['title'].lower() and track_artist.lower()
-            in item['track']['artist'].lower() and track_album.lower()
-            in item['track']['album'].lower()]
+    # if we have detailed info, perform a detailed search
+    if details['artist'] and details['title'] and details['album']:
+        search_results = [item for item in search_results if
+            s_in_s(details['title'],item['track']['title'])
+            and s_in_s(details['artist'],item['track']['artist'])
+            and s_in_s(details['album'],item['track']['album'])]
+        log('detail search results: '+str(len(search_results)),debug)
         if len(search_results) != 0:
             top_result = search_results[0]
 
     # gather up info about result
-    song = top_result.get('track')
-    song_id = song.get('storeId') if song.get('storeId') else song.get('id')
-    song_title = song.get('title')
-    song_artist = song.get('artist')
-    song_album = song.get('album')
-    update_stats(song,stats)
+    result = top_result.get('track')
+    result_details = create_result_details(result)
+
+    update_stats(result,stats)
 
     # check for low quality matches
     result_score = u' + '
+    score_reason = u' '
     is_low_result = False
     if top_result.get('score') < 120:
+        score_reason += u'{s}'
         is_low_result = True
     # wrong song
-    if not song_title.lower() in track.lower():
+    if ((details['title']
+        and not s_in_s(details['title'],result_details['title'],u'^'))
+        or (not details['title']
+        and not s_in_s(track,result_details['title']))):
+        score_reason += u'{T}'
+        low_titles += 1
         is_low_result = True
     # wrong album
-    if track_album and track_album.lower() not in song_album.lower():
+    if (details['album'] and not ignore_album_mismatch
+        and not s_in_s(details['album'],result_details['album'],u'^')):
+        score_reason += u'{a}'
         is_low_result = True
     # wrong artist
-    if track_artist and track_artist.lower() not in song_artist.lower():
+    if (details['artist']
+        and not s_in_s(details['artist'],result_details['artist'],u'^')):
+        score_reason += u'{A}'
+        low_artists += 1
         is_low_result = True
-        
+
     if is_low_result:
         result_score = u' - '
         low_scores += 1
 
     # display the original track for reference
-    log(result_score+track)
-
-    log_search_results(song_artist,song_album,song_title,song_id)
+    log(result_score+track+score_reason)
+    
+    log_search_results(result_details)
     
     # add the song to the id list
-    song_ids.append(song_id)
+    song_ids.append(result_details['songid'])
 
 log('===============================================================')
 log(u'Adding '+unicode(len(song_ids))+' found songs to: '+playlist_name)
@@ -221,18 +244,24 @@ while current_playlist <= total_playlists_needed:
 # log a final status
 no_match_ratio = float(no_matches) / track_count
 low_score_ratio = float(low_scores) / track_count
+low_artists_ratio = float(low_artists) / low_scores
+low_titles_ratio = float(low_titles) / low_scores
 found_ratio = 1 - no_match_ratio - low_score_ratio
 
 log('===============================================================')
 log('   ' + str(len(song_ids)) + '/' + str(track_count) + ' tracks imported')
 log(' ! ' + str(no_match_ratio) + ' percent of tracks could not be matched')
 log(' - ' + str(low_score_ratio) + ' percent of tracks had low match scores')
+log('  {T} ' + str(low_titles)
+    + ' low matches were due to a song title mismatch')
+log('  {A} ' + str(low_artists)
+    + ' low matches were due to song artist mismatch')
 log(' + ' + str(found_ratio) + ' percent of tracks had high match scores')
 log('')
 stats_results = calculate_stats_results(stats,len(song_ids))
 log_stats(log,stats_results)
 
 logfile.close()
-tsvfile.close()
+csvfile.close()
 api.logout()
 

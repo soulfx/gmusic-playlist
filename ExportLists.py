@@ -6,6 +6,7 @@ import sys
 import codecs
 from common import *
 
+tsep = track_info_separator
 
 if len(sys.argv) != 2:
     print 'ERROR output directory is required'
@@ -34,7 +35,7 @@ for playlist in playlist_contents:
 
     # setup output files
     logfile = open(os.path.join(output_dir,playlist_name+u'.log'),'w',1)
-    outfile = codecs.open(os.path.join(output_dir,playlist_name+u'.tsv'),
+    outfile = codecs.open(os.path.join(output_dir,playlist_name+u'.csv'),
         encoding='utf-8',mode='w')
     def log(message):
         print message
@@ -52,7 +53,7 @@ for playlist in playlist_contents:
 
     # add the playlist description as a "comment"
     if playlist_description:
-        outfile.write(u'\t')
+        outfile.write(tsep)
         outfile.write(playlist_description)
         outfile.write(os.linesep)
     
@@ -70,19 +71,14 @@ for playlist in playlist_contents:
                 continue
             track = library_track[0]
 
-        track_artist = track.get('artist')
-        track_album = track.get('album')
-        track_title = track.get('title')
-        track_id = track.get('storeId') if track.get('storeId') else track.get(
-            'id')
+        result_details = create_result_details(track)
 
         # update the stats
         update_stats(track,stats)
 
         # export the track
-        outfile.write(track_artist + u'\t' + track_album + u'\t' + track_title)
-        if use_track_ids:
-            outfile.write(u'\t' + track_id)
+        skip_id = not use_track_ids
+        outfile.write(create_details_string(result_details,skip_id))
         outfile.write(os.linesep)
 
     # calculate the stats

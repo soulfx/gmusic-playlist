@@ -1,24 +1,32 @@
-	test comment
-	test fuzzy artist title search
-stray cats stray cat strut
-	test another fuzzy artist title search
-the monkees i'm a believer
-	test fuzzy title artist search
-just what i needed the cars
-	test another fuzzy title artist search
-heart of gold neil young
-	test blank track
+\test comment (and blank track)
 
-	test yet another fuzzy title artist search
-more than a feeling boston
-	test fuzzy search for song that should return a low match
+\test fuzzy artist title search
+stray cats stray cat strut
+
+\test fuzzy title artist search
+just what i needed the cars
+
+\test fuzzy search for song that should return a low match
 instant karma! we all shine on john lennon
-	test library search (this song isn't in aa, but it's in my library)
-vanessa-mae		classical gas
-	test detailed search (the top fuzzy result for this song isn't right)
-!!!	strange weather	am/fm
-	this should return a low result
-ac/dc	back in black	back in black
-	test another personal library search (aa will return a low match, but
-	since it's in my library it finds that one instead)
-metallica	master of puppets	orion
+
+\test detailed library search (this song isn't in aa, but it's in my library)
+classical gas\vanessa-mae
+
+\test detailed all access search (the top fuzzy result is incorrect)
+am/fm\!!!\strange weather
+
+\this should return a low result
+back in black\ac/dc\back in black
+
+\test detailed search which should return song from library if you have it
+orion\metallica\master of puppets
+
+\test album distinction and slight artist mismatch
+Moments in Love\The Art of Noise\And What Have You Done with My Body God?
+Moments in Love\The Art of Noise\Daft
+
+\test slight title mismatch
+Making Love Out of Nothing at All\Air Supply\Ultimate Air Supply
+
+\test low score, mismatched title, and mistmatched artist
+Blame It on the Rain\Milli Vanilli\Greatest Hits

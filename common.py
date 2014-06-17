@@ -3,14 +3,43 @@
 
 from collections import Counter
 from gmusicapi import Mobileclient
+from preferences import *
 import time
 import getpass
 
-# the username to use
-username = 'john.elkins@gmail.com'
+# create result details from the given track
+def create_result_details(track):
+    result_details = {}
+    result_details['artist'] = track.get('artist')
+    result_details['album'] = track.get('album')
+    result_details['title'] = track.get('title')
+    result_details['songid'] = (track.get('storeId')
+        if track.get('storeId') else track.get('id'))
+    return result_details
 
-# import and export google specific track ids
-use_track_ids = True
+# create details dictionary based off the given details list
+def create_details(details_list):
+    details = {}
+    details['artist'] = None
+    details['album'] = None
+    details['title'] = None
+    details['songid'] = None
+    if len(details_list) < 2:
+        return details
+    for pos, nfo in enumerate(details_list):
+        details[track_info_order[pos]] = nfo.strip()
+    return details
+
+# create details string based off the given details dictionary
+def create_details_string(details_dict, skip_id = False):
+    out_string = u''
+    for nfo in track_info_order:
+        if skip_id and nfo == 'songid':
+            continue
+        if len(out_string) != 0:
+            out_string += track_info_separator
+        out_string += details_dict[nfo]
+    return out_string
 
 # log into google music
 def login():
