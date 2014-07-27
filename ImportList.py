@@ -242,10 +242,10 @@ while current_playlist <= total_playlists_needed:
     current_playlist += 1
 
 # log a final status
-no_match_ratio = float(no_matches) / track_count
-low_score_ratio = float(low_scores) / track_count
-low_artists_ratio = float(low_artists) / low_scores
-low_titles_ratio = float(low_titles) / low_scores
+no_match_ratio = float(no_matches) / track_count if track_count else 0
+low_score_ratio = float(low_scores) / track_count if track_count else 0
+low_artists_ratio = float(low_artists) / low_scores if low_scores else 0
+low_titles_ratio = float(low_titles) / low_scores if low_scores else 0
 found_ratio = 1 - no_match_ratio - low_score_ratio
 
 log('===============================================================')
