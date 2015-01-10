@@ -16,14 +16,62 @@ tsep = track_info_separator
 # some tracks
 search_personal_library = True
 
-# check to make sure a filename was given
-if len(sys.argv) != 2:
-    print 'ERROR input filename is required'
-    time.sleep(3)
+# variables for resources
+logfile = None
+csvfile = None
+api = None
+
+# cleans up any open resources
+def cleanup():
+    if logfile:
+        logfile.close()
+    if csvfile:
+        csvfile.close()
+    if api:
+        api.logout()
+
+# logs to both the console and log file if it exists
+def log(message, proceed = True, eol = True):
+    if not proceed:
+        return
+    if eol:
+        message += os.linesep
+    sys.stdout.write(message.encode(sys.stdout.encoding, errors='replace'))
+    if logfile:
+        logfile.write(message)
+
+# logs a progress message (a message without a line return)
+def plog(message):
+    log(message, eol = False)
+
+# logs search results to the log and to the csv
+def log_search_results(details):
+    # log the match results    
+    log (u'   ' + create_details_string(details, True))
+
+    # add the found song to the csv file
+    csvfile.write(create_details_string(details))
+    csvfile.write(os.linesep)
+
+# compares two strings based only on their characters
+def s_in_s(string1,string2,start=u''):
+    if not string1 or not string2:
+        return False
+    s1 = re.compile('[\W_]+', re.UNICODE).sub(u'',string1.lower())
+    s2 = re.compile('[\W_]+', re.UNICODE).sub(u'',string2.lower())
+    return re.search(start+s1,s2) or re.search(start+s2,s1)
+
+# sleeps a little bit after printing message before exiting
+def delayed_exit(message):
+    log(message)
+    time.sleep(5)
+    cleanup()
     exit()
 
-# log in
-api = login()
+# check to make sure a filename was given
+if len(sys.argv) != 2:
+    delayed_exit(u'ERROR input filename is required')
+
 
 # setup the input and output filenames and derive the playlist name
 input_filename = sys.argv[1].decode('utf-8')
@@ -36,39 +84,25 @@ output_filename += u'_' + unicode(datetime.datetime.now().strftime(
 log_filename = output_filename + u'.log'
 csv_filename = output_filename + u'.csv'
 
-# open the files
-with codecs.open(input_filename, encoding='utf-8', mode='r') as f:
-    tracks = f.read().splitlines()
-logfile = codecs.open(log_filename, encoding='utf-8', mode='w', buffering=1)
+#open the log files
 csvfile = codecs.open(csv_filename, encoding='utf-8', mode='w', buffering=1)
+logfile = codecs.open(log_filename, encoding='utf-8', mode='w', buffering=1)
 
-# log to both the console and log file
-def log(message, proceed = True):
-    if not proceed:
-        return
-    print message.encode(sys.stdout.encoding, errors='replace')
-    logfile.write(message)
-    logfile.write(os.linesep)
+# read the playlist file into the tracks variable
+tracks = []
+plog('Reading playlist... ')
+with codecs.open(input_filename, encoding='utf-8', mode='r', errors='ignore') as f:
+    tracks = f.read().splitlines()
+log('done. '+str(len(tracks))+' lines loaded.')
 
-# log search results to the log and to the csv
-def log_search_results(details):
-    # log the match results    
-    log (u'   ' + create_details_string(details, True))
+# log in
+log('Logging into google music... ')
+api = login()
+log('login successful')
 
-    # add the found song to the csv file
-    csvfile.write(create_details_string(details))
-    csvfile.write(os.linesep)
-
-# compare two strings based only on their characters
-def s_in_s(string1,string2,start=u''):
-    if not string1 or not string2:
-        return False
-    s1 = re.compile('[\W_]+', re.UNICODE).sub(u'',string1.lower())
-    s2 = re.compile('[\W_]+', re.UNICODE).sub(u'',string2.lower())
-    return re.search(start+s1,s2) or re.search(start+s2,s1)
-
-log('Loading library')
+plog('Loading personal library... ')
 library = api.get_all_songs()
+log('done. '+str(len(library))+' tracks loaded.')
 
 # begin searching for the tracks
 log('===============================================================')
@@ -260,8 +294,5 @@ log(' + ' + str(found_ratio) + ' percent of tracks had high match scores')
 log('')
 stats_results = calculate_stats_results(stats,len(song_ids))
 log_stats(log,stats_results)
-
-logfile.close()
-csvfile.close()
-api.logout()
+cleanup()
 

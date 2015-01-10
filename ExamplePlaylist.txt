@@ -30,3 +30,6 @@ Making Love Out of Nothing at All\Air Supply\Ultimate Air Supply
 
 \test low score, mismatched title, and mistmatched artist
 Blame It on the Rain\Milli Vanilli\Greatest Hits
+
+\test low score, mismatched title, mismatched artist, mismatched song
+1o1\Chris Duarte Groop\Ronp
