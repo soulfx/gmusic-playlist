@@ -6,18 +6,73 @@ from gmusicapi import Mobileclient
 from preferences import *
 import time
 import getpass
+import sys
+import os
+import codecs
 
-# create result details from the given track
+# the api to use for accessing google music
+api = None
+
+# the logfile for keeping track of things
+logfile = None
+
+# provide a shortcut for track_info_separator
+tsep = track_info_separator
+
+# check for debug set via cmd line
+if '-dDEBUG' in sys.argv:
+    debug = True
+
+# loads the personal library
+def load_personal_library():
+    plog('Loading personal library... ')
+    plib = api.get_all_songs()
+    log('done. '+str(len(plib))+' personal tracks loaded.')
+    return plib
+
+# opens the log for writing
+def open_log(filename):
+    global logfile
+    logfile = codecs.open(filename, encoding='utf-8', mode='w', buffering=1)
+    return logfile
+
+# closes the log
+def close_log():
+    if logfile:
+        logfile.close()
+
+# logs to both the console and log file if it exists
+def log(message, nl = True):
+    if nl:
+        message += os.linesep
+    sys.stdout.write(message.encode(sys.stdout.encoding, errors='replace'))
+    if logfile:
+        logfile.write(message)
+
+# logs a message if debug is true
+def dlog(message):
+    if debug:
+        log(message)
+
+# logs a progress message (a message without a line return)
+def plog(message):
+    log(message, nl = False)
+
+# gets the track details available for google tracks
+def get_google_track_details(sample_song = 'one u2'):
+    return (api.search_all_access(sample_song,max_results=1)
+        .get('song_hits')[0].get('track').keys())
+
+# creates result details from the given track
 def create_result_details(track):
     result_details = {}
-    result_details['artist'] = track.get('artist')
-    result_details['album'] = track.get('album')
-    result_details['title'] = track.get('title')
+    for key, value in track.iteritems():
+        result_details[key] = value
     result_details['songid'] = (track.get('storeId')
         if track.get('storeId') else track.get('id'))
     return result_details
 
-# create details dictionary based off the given details list
+# creates details dictionary based off the given details list
 def create_details(details_list):
     details = {}
     details['artist'] = None
@@ -30,7 +85,7 @@ def create_details(details_list):
         details[track_info_order[pos]] = nfo.strip()
     return details
 
-# create details string based off the given details dictionary
+# creates details string based off the given details dictionary
 def create_details_string(details_dict, skip_id = False):
     out_string = u''
     for nfo in track_info_order:
@@ -38,25 +93,37 @@ def create_details_string(details_dict, skip_id = False):
             continue
         if len(out_string) != 0:
             out_string += track_info_separator
-        out_string += details_dict[nfo]
+        try:
+            out_string += unicode(details_dict[nfo])
+        except KeyError:
+            # some songs don't have info like year, genre, etc
+            pass
     return out_string
 
-# log into google music
-def login():
+# logs into google music api
+def open_api():
+    global api
+    log('Logging into google music...')
     # get the password each time so that it isn't stored in plain text
     password = getpass.getpass(username + '\'s password: ')
     
     api = Mobileclient()
     if not api.login(username, password):
-        print 'ERROR unable to login'
+        log('ERROR unable to login')
         time.sleep(3)
         exit()
         
     password = None
-
+    log('Login Successful.')
+    dlog(u'Available track details: '+str(get_google_track_details()))
     return api
 
-# create a stats dictionary
+# logs out of the google music api
+def close_api():
+    if api:
+        api.logout()
+
+# creates a stats dictionary
 def create_stats():
     stats = {}
     stats['genres'] = []
@@ -65,7 +132,7 @@ def create_stats():
     stats['total_playcount'] = 0
     return stats
 
-# update the stats dictionary with info from the track
+# updates the stats dictionary with info from the track
 def update_stats(track,stats):
     stats['artists'].append(track.get('artist'))
     if track.get('genre'): stats['genres'].append(track.get('genre'))
@@ -73,7 +140,7 @@ def update_stats(track,stats):
     if track.get('playCount'): stats['total_playcount'] += track.get(
         'playCount')
 
-# calculate stats
+# calculates stats
 def calculate_stats_results(stats,total_tracks):
     results = {}
     results['genres'] = Counter(stats['genres'])
@@ -82,8 +149,8 @@ def calculate_stats_results(stats,total_tracks):
     results['playback_ratio'] = stats['total_playcount']/float(total_tracks)
     return results    
 
-# log the results
-def log_stats(log,results):
+# logs the stats results
+def log_stats(results):
     log(u'top 3 genres: '+repr(results['genres'].most_common(3)))
     log(u'top 3 artists: '+repr(results['artists'].most_common(3)))
     log(u'top 3 years: '+repr(results['years'].most_common(3)))

@@ -33,3 +33,6 @@ Blame It on the Rain\Milli Vanilli\Greatest Hits
 
 \test low score, mismatched title, mismatched artist, mismatched song
 1o1\Chris Duarte Groop\Ronp
+
+\test useless info in brackets and duplicate checks
+1o1 (Live!) [In Concert] {World Tour}\Chris Duarte Groop\Ronp
