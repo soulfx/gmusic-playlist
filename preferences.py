@@ -28,3 +28,13 @@ ignore_album_mismatch = True
 # some tracks.  Set to false if you want to make sure that your playlist doesn't
 # contain any tracks that are not shareable.
 search_personal_library = True
+
+# when unable to locate a track using full details (title,artist,album); perform
+# a search using only the song title.  this will hopefully find something to
+# at least put into the track spot.  this is handy for playlists that list the
+# composer or songwriter for a song instead of a singer.
+search_title_only = True
+
+# log high matches in addition to the songs that couldn't be found or had
+# low matches.
+log_high_matches = False

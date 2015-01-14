@@ -4,6 +4,7 @@
 import re
 import datetime
 import math
+import time
 from common import *
 
 # the file for outputing the information google has one each song
@@ -17,12 +18,13 @@ def cleanup():
     close_api()
 
 # compares two strings based only on their characters
-def s_in_s(string1,string2,start=u''):
+def s_in_s(string1,string2):
     if not string1 or not string2:
         return False
     s1 = re.compile('[\W_]+', re.UNICODE).sub(u'',string1.lower())
     s2 = re.compile('[\W_]+', re.UNICODE).sub(u'',string2.lower())
-    return re.search(start+s1,s2) or re.search(start+s2,s1)
+
+    return s1 in s2 or s2 in s1
 
 # sleeps a little bit after printing message before exiting
 def delayed_exit(message):
@@ -32,9 +34,13 @@ def delayed_exit(message):
     exit()
 
 # add the song
-def add_song(details):
+def add_song(details,score):
+    (result_score,score_reason) = score
 
-    log (u'   ' + create_details_string(details, True))
+    if ('+' in result_score and log_high_matches) or '-' in result_score:
+        log(result_score+track+score_reason+u' #'+str(len(song_ids)))
+        log (u'   ' + create_details_string(details, True))
+
     if not allow_duplicates and details['songid'] in song_ids:
         return
 
@@ -42,9 +48,18 @@ def add_song(details):
     csvfile.write(create_details_string(details))
     csvfile.write(os.linesep)
 
+# log an unmatched track
+def log_unmatched(track):
+    global no_matches
+    log(u'!! '+track)
+    csvfile.write(track)
+    csvfile.write(os.linesep)
+    no_matches += 1
+
 # search for the song with the given details
 def search_for_track(details):
     search_results = []
+    dlog('search details: '+str(details))
 
     # search the personal library for the track
     lib_album_match = False
@@ -63,15 +78,36 @@ def search_for_track(details):
 
     # search all access for the track
     if not lib_album_match:
-        query = track
-        if details['artist'] and details['title']:
-            query = details['artist'] + u' ' + details['title']
+        query = u''
+        if details['artist']:
+            query = details['artist']
+        if details['title']:
+            query += u' ' + details['title']
+        if not len(query):
+            query = track
+        dlog('aa search query:'+query)
         aa_results = api.search_all_access(query,max_results=7).get(
             'song_hits')
         dlog('aa search results: '+str(len(aa_results)))
         search_results.extend(aa_results)
 
-    return search_results
+    if not len(search_results):
+        return None
+
+    top_result = search_results[0]
+    # if we have detailed info, perform a detailed search
+    if details['artist'] and details['title']:
+        search_results = [item for item in search_results if
+            s_in_s(details['title'],item['track']['title'])
+            and s_in_s(details['artist'],item['track']['artist'])]
+        if details['album']:
+            search_results = [item for item in search_results if
+                    s_in_s(details['album'],item['track']['album'])]
+        dlog('detail search results: '+str(len(search_results)))
+        if len(search_results) != 0:
+            top_result = search_results[0]
+
+    return top_result
 
 # match score stats
 no_matches = 0
@@ -94,10 +130,11 @@ def score_track(details,result_details,top_score = 200):
     is_low_result = False
     if top_score < 120:
         score_reason += u'{s}'
-        is_low_result = True
+        #low scores alone don't seem to me a good indication of an issue
+        #is_low_result = True
     # wrong song
     if ((details['title']
-        and not s_in_s(details['title'],result_details['title'],u'^'))
+        and not s_in_s(details['title'],result_details['title']))
         or (not details['title']
         and not s_in_s(track,result_details['title']))):
         score_reason += u'{T}'
@@ -105,12 +142,12 @@ def score_track(details,result_details,top_score = 200):
         is_low_result = True
     # wrong album
     if (details['album'] and not ignore_album_mismatch
-        and not s_in_s(details['album'],result_details['album'],u'^')):
+        and not s_in_s(details['album'],result_details['album'])):
         score_reason += u'{a}'
         is_low_result = True
     # wrong artist
     if (details['artist']
-        and not s_in_s(details['artist'],result_details['artist'],u'^')):
+        and not s_in_s(details['artist'],result_details['artist'])):
         score_reason += u'{A}'
         low_artists += 1
         is_low_result = True
@@ -124,8 +161,7 @@ def score_track(details,result_details,top_score = 200):
         result_score = u' - '
         low_scores += 1
 
-    # display the match score on the original track
-    log(result_score+track+score_reason)
+    return (result_score,score_reason)
 
 # check to make sure a filename was given
 if len(sys.argv) < 2:
@@ -170,6 +206,9 @@ song_ids = []
 # collect some stats on the songs
 stats = create_stats()
 
+# time how long it takes
+start_time = time.time()
+
 # loop over the tracks that were read from the input file
 for track in tracks:
     
@@ -199,48 +238,50 @@ for track in tracks:
 
     # don't search if we already have a track id
     if details['songid']:
-        score_track(details,details)
-        add_song(details)
+        add_song(details,score_track(details,details))
         continue
 
     # search for the song
-    search_results = search_for_track(details)
+    search_result = search_for_track(details)
 
     # if we didn't find anything strip out any (),{},[],<> from title
     match_string = '\[.*?\]|{.*?}|\(.*?\)|<.*?>'
-    if len(search_results) == 0 and re.search(match_string,details['title']):
+    if not search_result and re.search(match_string,details['title']):
         dlog('No results found, attempting search again with modified title.')
         details['title'] = re.sub(match_string,'',details['title'])
-        search_results = search_for_track(details)
+        search_result = search_for_track(details)
+
+    slim_details = {}
+    # if there isn't a result, try searching for the title only
+    if not search_result and search_title_only:
+        dlog('Attempting to search for title only')
+        slim_details['artist'] = None
+        slim_details['title'] = details['title']
+        search_result = search_for_track(slim_details)
 
     # check for a result
-    if len(search_results) == 0:
-        log(u'!! '+track)
-        csvfile.write(track)
-        csvfile.write(os.linesep)
-        no_matches += 1
+    if not search_result:
+        log_unmatched(track)
         continue
 
-    top_result = search_results[0]
-    # if we have detailed info, perform a detailed search
-    if details['artist'] and details['title'] and details['album']:
-        search_results = [item for item in search_results if
-            s_in_s(details['title'],item['track']['title'])
-            and s_in_s(details['artist'],item['track']['artist'])
-            and s_in_s(details['album'],item['track']['album'])]
-        dlog('detail search results: '+str(len(search_results)))
-        if len(search_results) != 0:
-            top_result = search_results[0]
-
     # gather up info about result
-    result = top_result.get('track')
+    result = search_result.get('track')
     result_details = create_result_details(result)
+    result_score = score_track(details,result_details,
+        search_result.get('score'))
+
+    # if the song title doesn't match after a title only search, skip it
+    (score,reason) = result_score
+    if '{T}' in reason and 'title' in slim_details:
+        log_unmatched(track)
+        continue
 
     update_stats(result,stats)
-    score_track(details,result_details,top_result.get('score'))
     
     # add the song to the id list
-    add_song(result_details)
+    add_song(result_details,result_score)
+
+total_time = time.time() - start_time
 
 log('===============================================================')
 log(u'Adding '+unicode(len(song_ids))+' found songs to: '+playlist_name)
@@ -292,5 +333,8 @@ log(' + ' + str(found_ratio*100) + '% of tracks had high match scores')
 log('')
 stats_results = calculate_stats_results(stats,len(song_ids))
 log_stats(stats_results)
+
+log('\nsearch time: '+str(total_time))
+
 cleanup()
 

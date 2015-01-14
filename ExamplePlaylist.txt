@@ -36,3 +36,7 @@ Blame It on the Rain\Milli Vanilli\Greatest Hits
 
 \test useless info in brackets and duplicate checks
 1o1 (Live!) [In Concert] {World Tour}\Chris Duarte Groop\Ronp
+
+\test title only search
+Be Thou My Vision\Dallan Forgaill\
+
