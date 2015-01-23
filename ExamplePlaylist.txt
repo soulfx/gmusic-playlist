@@ -40,3 +40,12 @@ Blame It on the Rain\Milli Vanilli\Greatest Hits
 \test title only search
 Be Thou My Vision\Dallan Forgaill\
 
+\test initial unmatched fuzzy with info in brackets
+stray cats (asdfDoNotMatchMe1234) stray cat strut
+
+\
+\expected results
+\13/15 tracks imported
+\2 duplicate tracks
+\
+

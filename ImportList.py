@@ -244,20 +244,29 @@ for track in tracks:
     # search for the song
     search_result = search_for_track(details)
 
+    # a details dictionary we can use for 'smart' searching
+    smart_details = {}
+    smart_details['title'] = details['title']
+    smart_details['artist'] = details['artist']
+    smart_details['album'] = details['album']
+
+    if not details['title']:
+        smart_details['title'] = track
+
     # if we didn't find anything strip out any (),{},[],<> from title
     match_string = '\[.*?\]|{.*?}|\(.*?\)|<.*?>'
-    if not search_result and re.search(match_string,details['title']):
+    if not search_result and re.search(match_string,smart_details['title']):
         dlog('No results found, attempting search again with modified title.')
-        details['title'] = re.sub(match_string,'',details['title'])
-        search_result = search_for_track(details)
+        smart_details['title'] = re.sub(match_string,'',smart_details['title'])
+        search_result = search_for_track(smart_details)
 
-    slim_details = {}
     # if there isn't a result, try searching for the title only
     if not search_result and search_title_only:
         dlog('Attempting to search for title only')
-        slim_details['artist'] = None
-        slim_details['title'] = details['title']
-        search_result = search_for_track(slim_details)
+        smart_details['artist'] = None
+        smart_details['album'] = None
+        smart_details['title_only_search'] = True
+        search_result = search_for_track(smart_details)
 
     # check for a result
     if not search_result:
@@ -272,7 +281,7 @@ for track in tracks:
 
     # if the song title doesn't match after a title only search, skip it
     (score,reason) = result_score
-    if '{T}' in reason and 'title' in slim_details:
+    if '{T}' in reason and 'title_only_search' in smart_details:
         log_unmatched(track)
         continue
 
