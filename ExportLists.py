@@ -17,19 +17,10 @@ if not os.path.exists(output_dir):
 api = open_api()
 library = load_personal_library()
 
-# the personal library is used so we can lookup tracks that fail to return
-# info from the ...playlist_contents() call
-
-playlist_contents = api.get_all_user_playlist_contents()
-
-for playlist in playlist_contents:
-    playlist_name = playlist.get('name')
-    playlist_description = playlist.get('description')
-    playlist_tracks = playlist.get('tracks')
-    
+def playlist_handler(playlist_name, playlist_description, playlist_tracks):
     # skip empty and no-name playlists
-    if not playlist_name: continue
-    if len(playlist_tracks) == 0: continue
+    if not playlist_name: return
+    if len(playlist_tracks) == 0: return
 
     # setup output files
     open_log(os.path.join(output_dir,playlist_name+u'.log'))
@@ -53,14 +44,14 @@ for playlist in playlist_contents:
         outfile.write(tsep)
         outfile.write(playlist_description)
         outfile.write(os.linesep)
-    
-    for tnum, pl_track in enumerate(playlist_tracks):
 
+    for tnum, pl_track in enumerate(playlist_tracks):
         track = pl_track.get('track')
 
         # we need to look up these track in the library
         if not track:
-            library_track = [item for item in library if item.get('id')
+            library_track = [
+                item for item in library if item.get('id')
                 in pl_track.get('trackId')]
             if len(library_track) == 0:
                 log(u'!! '+str(tnum+1)+repr(pl_track))
@@ -94,6 +85,35 @@ for playlist in playlist_contents:
     # close the files
     close_log()
     outfile.close()
+
+# the personal library is used so we can lookup tracks that fail to return
+# info from the ...playlist_contents() call
+
+playlist_contents = api.get_all_user_playlist_contents()
+
+for playlist in playlist_contents:
+    playlist_name = playlist.get('name')
+    playlist_description = playlist.get('description')
+    playlist_tracks = playlist.get('tracks')
+
+    playlist_handler(playlist_name, playlist_description, playlist_tracks)
+
+
+if export_thumbs_up:
+    # get thumbs up playlist
+    thumbs_up_tracks = []
+    for track in library:
+        if track.get('rating') is not None and int(track.get('rating')) > 1:
+            thumbs_up_tracks.append(track)
+
+
+    # modify format of each dictionary to match the data type
+    # of the other playlists
+    thumbs_up_tracks_formatted = []
+    for t in thumbs_up_tracks:
+        thumbs_up_tracks_formatted.append({'track': t})
+
+    playlist_handler('Thumbs up', 'Thumbs up tracks', thumbs_up_tracks_formatted)
 
 close_api()
     

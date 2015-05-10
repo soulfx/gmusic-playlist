@@ -38,3 +38,6 @@ search_title_only = True
 # log high matches in addition to the songs that couldn't be found or had
 # low matches.
 log_high_matches = False
+
+# export "Thumbs Up" playlist
+export_thumbs_up = True
