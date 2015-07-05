@@ -60,8 +60,10 @@ def plog(message):
 
 # gets the track details available for google tracks
 def get_google_track_details(sample_song = 'one u2'):
-    return (api.search_all_access(sample_song,max_results=1)
-        .get('song_hits')[0].get('track').keys())
+    results = api.search_all_access(sample_song,max_results=1).get('song_hits')
+    if len(results):
+        return (results[0].get('track').keys())
+    return "['title','artist','album']"
 
 # creates result details from the given track
 def create_result_details(track):
