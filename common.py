@@ -96,7 +96,7 @@ def create_details_string(details_dict, skip_id = False):
         if len(out_string) != 0:
             out_string += track_info_separator
         try:
-            out_string += unicode(details_dict[nfo])
+            out_string += '"' + unicode(details_dict[nfo]).replace('"', "'") + '"'
         except KeyError:
             # some songs don't have info like year, genre, etc
             pass
