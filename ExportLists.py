@@ -98,7 +98,6 @@ for playlist in playlist_contents:
 
     playlist_handler(playlist_name, playlist_description, playlist_tracks)
 
-
 if export_thumbs_up:
     # get thumbs up playlist
     thumbs_up_tracks = []
@@ -114,6 +113,13 @@ if export_thumbs_up:
         thumbs_up_tracks_formatted.append({'track': t})
 
     playlist_handler('Thumbs up', 'Thumbs up tracks', thumbs_up_tracks_formatted)
+
+if export_all:
+    all_tracks_formatted = []
+    for t in library:
+        all_tracks_formatted.append({'track': t})
+
+    playlist_handler('All', 'All tracks', all_tracks_formatted)
 
 close_api()
     
