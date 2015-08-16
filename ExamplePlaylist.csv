@@ -1,0 +1,51 @@
+,test comment (and blank track)
+
+,test fuzzy artist title search
+stray cats stray cat strut
+
+,test fuzzy title artist search
+just what i needed the cars
+
+,test fuzzy search for song that should return a low match
+instant karma! we all shine on john lennon
+
+,"test detailed library search (this song isn't in aa, but it's in my library)"
+classical gas,vanessa-mae
+
+,test detailed all access search (the top fuzzy result is incorrect)
+am/fm,!!!,strange weather
+
+,this should return a low result
+back in black,ac/dc,back in black
+
+,test detailed search which should return song from library if you have it
+orion,metallica,master of puppets
+
+,test album distinction and slight artist mismatch
+Moments in Love,The Art of Noise,And What Have You Done with My Body God?
+Moments in Love,The Art of Noise,Daft
+
+,test slight title mismatch
+Making Love Out of Nothing at All,Air Supply,Ultimate Air Supply
+
+,"test low score, mismatched title, and mistmatched artist, and comma in entry"
+Blame It on the Rain,Milli Vanilli,Greatest Hits
+
+,"test low score, mismatched title, mismatched artist, mismatched song, and entry comma"
+1o1,Chris Duarte Groop,Ronp
+
+,test useless info in brackets and duplicate checks
+1o1 (Live!) [In Concert] {World Tour},Chris Duarte Groop,Ronp
+
+,test title only search
+Be Thou My Vision,Dallan Forgaill,
+
+,test initial unmatched fuzzy with info in brackets
+stray cats (asdfDoNotMatchMe1234) stray cat strut
+
+,
+,expected results
+,13/15 tracks imported
+,2 duplicate tracks
+,
+

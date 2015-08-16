@@ -217,7 +217,7 @@ for track in tracks:
         continue
 
     # parse the track info if the line is in detail format
-    details_list = map(handle_quote_input, track.split(tsep))
+    details_list = get_csv_fields(track)
     details = create_details(details_list)
 
     # skip comment lines

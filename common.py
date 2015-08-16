@@ -87,15 +87,32 @@ def create_details(details_list):
         details[track_info_order[pos]] = nfo.strip()
     return details
 
+# split a csv line into it's separate fields
+def get_csv_fields(csvString,sepChar=tsep):
+    fields = []
+    fieldValue = u''
+    ignoreTsep = False
+    for c in csvString:
+        if c == sepChar and not ignoreTsep:
+            fields.append(handle_quote_input(fieldValue))
+            fieldValue = u''
+            continue
+        elif c == '"':
+            ignoreTsep = (not ignoreTsep)
+        fieldValue += c
+    fields.append(handle_quote_input(fieldValue))
+    return fields
+
+# add quotes around a csv field and return the quoted field
 def handle_quote_output(aString):
   """ See: https://en.wikipedia.org/wiki/Comma-separated_values#Basic_rules_and_examples """
   return '"%s"' % aString.replace('"', '""')
 
+# remove the quotes from around a csv field, and return the unquoted field
 def handle_quote_input(aString):
-  if len(aString) <= 1:
-    return aString
-  elif aString[0] == '"' and aString[-1] == '"':
+  if len(aString) > 1 and aString[0] == '"' and aString[-1] == '"':
     return aString[1:-1].replace('""', '"')
+  return aString
 
 # creates details string based off the given details dictionary
 def create_details_string(details_dict, skip_id = False):
