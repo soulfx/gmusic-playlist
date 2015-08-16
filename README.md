@@ -15,15 +15,13 @@ When the scripts are run they will prompt for your password.  If you use two fac
 
 ## ExportLists.py
 
-This script will export all playlists to a given directory as csv files.  For the purpose of these scripts CSV stands for character seperated value.  The default separator charator is '\'  The separator character is configurable in the preferences file.  Most spreadsheet apps can open this type of file.
+This script will export all playlists to a given directory as csv files.  For the purpose of these scripts CSV stands for character seperated value.  The default separator charator is ','  The separator character is configurable in the preferences file.  Versions of the code previous to Aug 16 2015 used a '\' separator character as the default.  Most spreadsheet apps can open csv files.
 
-The order in which the artist, album, and title information appears as well as the separating character between each piece of information is configured in the preference.py file.  The default order and separator character will output song info as: title\artist\album\songid
+The order in which the artist, album, and title information appears as well as the separating character between each piece of information is configured in the preference.py file.  The default order and separator character will output song info as: "title","artist","album","songid"
 
 The csv files can be re-imported using the ImportList.py script.
 
 Command Line Usage: python ExportLists.py OutputDir
-
-GUI Usage (Windows): Drag and drop OutputDir onto ExpertLists.py
 
 OutputDir is a directory you would like the playlists to be output to.
 
@@ -31,11 +29,9 @@ The export progress will be output to the console and to a log file.  At the com
 
 ## ImportList.py
 
-This script will import a given text, or csv file into google music as a playlist. The title of the playlist will be the name of the text file and each track will be matched to each line in the text file.
+This script will import a given csv file into google music as a playlist. The title of the playlist will be the name of the text file and each track will be matched to each line in the text file.
 
-Command Line Usage: python ImportList.py ExamplePlaylist.txt
-
-GUI Usage (Windows): Drag and Drop the ExamplePlaylist.txt file onto ImportList.py
+Command Line Usage: python ImportList.py ExamplePlaylist.csv
 
 The progress of the playlist creation will be output to the console and to a log file.  Tracks that could not be found are prefixed with !! and tracks that were found but may not be a good match are prefixed with -.  One or more of the following will appear after a track with a low match: {A}{a}{T}{s}  These markings indicate why the match was low,  {A} means the artist didn't match, {T} means the title didn't match, {a} means the album didn't match, and {s} means it had a low result score.  In addition to a log file, a csv file is created which contains all tracks found and their associated google music song id.
 
@@ -47,8 +43,8 @@ You can also look up the song you want via google music's web interface and get 
 
 The format of each track in a playlist file can either be fuzzy or detailed info.  Comments are also supported.
 
-A fuzzy track is a track that has no separating characters and simply lists a song title, song title and author, or song author and title.  See the ExamplePlaylist.txt file for a few examples of fuzzy tracks.  Fuzzy tracks will only be matched to all access tracks.  If you have a song in a playlist that isn't in all access, but is in your personal library you will need to use a detailed track.
+A fuzzy track is a track that has no separating characters and simply lists a song title, song title and author, or song author and title.  See the ExamplePlaylist.csv file for a few examples of fuzzy tracks.  Fuzzy tracks will only be matched to all access tracks.  If you have a song in a playlist that isn't in all access, but is in your personal library you will need to use a detailed track.
 
-A detailed track lists title,artist,and album information separated by the separator character and in the order defined in the preferences.py file.  The songId is optional, and will be added by the scripts when outputting a csv file.  See the ExamplePlaylist.txt file for a few examples of detailed track lists.  The album can be left out if not required.
+A detailed track lists title,artist,and album information separated by the separator character and in the order defined in the preferences.py file.  The songId is optional, and will be added by the scripts when outputting a csv file.  See the ExamplePlaylist.csv file for a few examples of detailed track lists.  The album can be left out if not required.
 
-A comment in a playlist file follows the form of Ccomment where C is the separator character and comment is the comment.  See the ExamplePlaylist.txt file.
+A comment in a playlist file follows the form of Ccomment where C is the separator character and comment is the comment.  See the ExamplePlaylist.csv file.
