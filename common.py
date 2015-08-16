@@ -106,13 +106,17 @@ def get_csv_fields(csvString,sepChar=tsep):
 # add quotes around a csv field and return the quoted field
 def handle_quote_output(aString):
   """ See: https://en.wikipedia.org/wiki/Comma-separated_values#Basic_rules_and_examples """
-  return '"%s"' % aString.replace('"', '""')
+  if aString.find('"') > -1:
+    return '"%s"' % aString.replace('"', '""')
+  else:
+    return aString
 
 # remove the quotes from around a csv field, and return the unquoted field
 def handle_quote_input(aString):
-  if len(aString) > 1 and aString[0] == '"' and aString[-1] == '"':
-    return aString[1:-1].replace('""', '"')
-  return aString
+  if len(aString) > 0 and aString[0] == '"' and aString[-1] == '"':
+      return aString[1:-1].replace('""', '"')
+  else:
+      return aString
 
 # creates details string based off the given details dictionary
 def create_details_string(details_dict, skip_id = False):
