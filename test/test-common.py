@@ -4,6 +4,7 @@ from common import *
 class TestCommon(unittest.TestCase):
 
     def test_get_csv_fields(self):
+        """ test that quoted and unquoted fields are being recognized """
         fields = get_csv_fields(u'something,"good",to "eat","like a ""hot""",dog',u',')
         self.assertEqual(fields[0],u'something')
         self.assertEqual(fields[1],u'good')
@@ -19,11 +20,18 @@ class TestCommon(unittest.TestCase):
         self.assertEqual(fields[1],u'commas, in, the, field')
 
     def test_handle_quote_input(self):
+        """ test that quotes are being removed as expected """
         self.assertEqual(handle_quote_input(u''),u'')
         self.assertEqual(handle_quote_input(u'a'),u'a')
         self.assertEqual(handle_quote_input(u'""'),u'')
         self.assertEqual(handle_quote_input(u'""asdf""'),u'"asdf"')
         self.assertEqual(handle_quote_input(u'"asdf"'),u'asdf')
+
+    def test_handle_quote_output(self):
+        """ test that quotes are applied only when needed """
+        self.assertEqual(handle_quote_output("nothing to quote"),"nothing to quote")
+        self.assertEqual(handle_quote_output('this "needs" quoting'),'"this ""needs"" quoting"')
+        self.assertEqual(handle_quote_output('tsep, in field'),'"tsep, in field"')
 
     def test_quote_unquote(self):
         """ test for verifying the quoting and unquoting that occurs in track values """

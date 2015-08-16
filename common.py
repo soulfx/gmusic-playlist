@@ -106,7 +106,7 @@ def get_csv_fields(csvString,sepChar=tsep):
 # add quotes around a csv field and return the quoted field
 def handle_quote_output(aString):
   """ See: https://en.wikipedia.org/wiki/Comma-separated_values#Basic_rules_and_examples """
-  if aString.find('"') > -1:
+  if aString.find('"') > -1 or aString.find(tsep) > -1:
     return '"%s"' % aString.replace('"', '""')
   else:
     return aString
