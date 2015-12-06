@@ -86,8 +86,7 @@ def search_for_track(details):
         if not len(query):
             query = track
         dlog('aa search query:'+query)
-        aa_results = api.search_all_access(query,max_results=7).get(
-            'song_hits')
+        aa_results = aa_search(query,7)
         dlog('aa search results: '+str(len(aa_results)))
         search_results.extend(aa_results)
 

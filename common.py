@@ -3,6 +3,7 @@
 
 from collections import Counter
 from gmusicapi import Mobileclient
+from gmusicapi.exceptions import CallFailure
 from preferences import *
 import time
 import getpass
@@ -18,6 +19,9 @@ logfile = None
 
 # provide a shortcut for track_info_separator
 tsep = track_info_separator
+
+# flag indicating if account is all access capable
+allaccess = True
 
 # check for debug set via cmd line
 if '-dDEBUG' in sys.argv:
@@ -58,9 +62,23 @@ def dlog(message):
 def plog(message):
     log(message, nl = False)
 
+# search all access
+def aa_search(search_string,max_results):
+    global allaccess
+    results = []
+    if allaccess:
+        try:
+            results = api.search_all_access(search_string,
+                    max_results=max_results).get('song_hits')
+        except CallFailure:
+            allaccess = False
+            log('WARNING no all access subscription detected. '+
+                ' all access search disabled.')
+    return results
+
 # gets the track details available for google tracks
 def get_google_track_details(sample_song = 'one u2'):
-    results = api.search_all_access(sample_song,max_results=1).get('song_hits')
+    results = aa_search(sample_song,1)
     if len(results):
         return (results[0].get('track').keys())
     return "['title','artist','album']"
