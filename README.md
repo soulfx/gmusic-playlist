@@ -48,3 +48,7 @@ A fuzzy track is a track that has no separating characters and simply lists a so
 A detailed track lists title,artist,and album information separated by the separator character and in the order defined in the preferences.py file.  The songId is optional, and will be added by the scripts when outputting a csv file.  See the ExamplePlaylist.csv file for a few examples of detailed track lists.  The album can be left out if not required.
 
 A comment in a playlist file follows the form of Ccomment where C is the separator character and comment is the comment.  See the ExamplePlaylist.csv file.
+
+## see also 
+
+[a javascript version](https://github.com/soulfx/gmusic-playlist.js) for doing import / export directly within google music.
