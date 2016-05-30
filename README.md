@@ -7,7 +7,6 @@ playlist scripts for gmusic
 
 - python 2.7 - https://www.python.org
 - gmusicapi - https://github.com/simon-weber/Unofficial-Google-Music-API
- - version >= https://github.com/simon-weber/gmusicapi/tree/d2a5cc91e209ec5fdf7ba89fe04d32c2a0155dff
 
 Before using the scripts, open up the preferences.py file and change the username.
 

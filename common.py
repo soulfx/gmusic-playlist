@@ -1,10 +1,16 @@
 # Author: John Elkins <john.elkins@yahoo.com>
 # License: MIT <LICENSE>
 
+__version__ = '0.160530'
+
+__required_gmusicapi_version__ = '10.0.0'
+
 from collections import Counter
+from gmusicapi import __version__ as gmusicapi_version
 from gmusicapi import Mobileclient
 from gmusicapi.exceptions import CallFailure
 from preferences import *
+import re
 import time
 import getpass
 import sys
@@ -26,6 +32,19 @@ allaccess = True
 # check for debug set via cmd line
 if '-dDEBUG' in sys.argv:
     debug = True
+
+# check versions
+def assert_prerequisites():
+
+    required = __required_gmusicapi_version__
+    actual = gmusicapi_version
+    
+    def version(ver):
+        return int(re.sub(r'\D','',ver))
+
+    if ( version(actual) < version(required) ):
+        log("ERROR gmusicapi version of at least "+required+" is required. ")
+        exit()
 
 # loads the personal library
 def load_personal_library():
@@ -206,3 +225,8 @@ def log_stats(results):
     log(u'top 3 artists: '+repr(results['artists'].most_common(3)))
     log(u'top 3 years: '+repr(results['years'].most_common(3)))
     log(u'playlist playback ratio: '+unicode(results['playback_ratio']))
+
+# display version and check prerequisites
+log("gmusic-playlist: "+__version__)
+log("gmusicapi: "+gmusicapi_version)
+assert_prerequisites();
