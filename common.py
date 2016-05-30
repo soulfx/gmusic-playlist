@@ -68,7 +68,7 @@ def aa_search(search_string,max_results):
     results = []
     if allaccess:
         try:
-            results = api.search_all_access(search_string,
+            results = api.search(search_string,
                     max_results=max_results).get('song_hits')
         except CallFailure:
             allaccess = False
