@@ -23,6 +23,7 @@ def playlist_handler(playlist_name, playlist_description, playlist_tracks):
     if len(playlist_tracks) == 0: return
 
     # setup output files
+    playlist_name = playlist_name.replace('/', '')
     open_log(os.path.join(output_dir,playlist_name+u'.log'))
     outfile = codecs.open(os.path.join(output_dir,playlist_name+u'.csv'),
         encoding='utf-8',mode='w')
