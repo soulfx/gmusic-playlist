@@ -121,6 +121,8 @@ def create_details(details_list):
     if len(details_list) < 2:
         return details
     for pos, nfo in enumerate(details_list):
+        if len(track_info_order) <= pos:
+            continue
         details[track_info_order[pos]] = nfo.strip()
     return details
 
